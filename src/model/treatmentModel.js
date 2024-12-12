@@ -57,7 +57,8 @@ const treatmentSchema = new mongoose.Schema({
           appointments : [{
                 appointmentId : String ,
                 appointment_Date : String ,
-                disease_name : String
+                disease_name : String,
+                status : String
 
         }],  
 

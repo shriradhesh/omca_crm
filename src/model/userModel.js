@@ -5,8 +5,7 @@ const userSchema = new mongoose.Schema({
                 type : String
           },
           email : {
-               type : String
-             
+               type : String            
                
           },
           phone_no : {
@@ -33,7 +32,30 @@ const userSchema = new mongoose.Schema({
               default : 1
           } ,
 
-          refreshToken : String
+          refreshToken : String ,
+
+
+          userLogs: [
+               {
+                 date: {
+                   type: Date,
+                   required: true,
+                   default: new Date(),
+                 },
+                 loginTime: {
+                   type: Date, 
+                 },
+                 logoutTime: {
+                   type: Date, 
+                 },
+                 activeDuration: {
+                   type: Number, 
+                   default: 0,
+                 },
+               },
+             ],
+
+         
 } , { timestamps : true })
 
 const userModel = mongoose.model('user', userSchema)

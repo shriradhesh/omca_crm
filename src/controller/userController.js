@@ -129,7 +129,9 @@ const mongoose = require('mongoose')
               );
 
               user.refreshToken = refreshToken;
-              await user.save()
+              
+
+         
                       
                              const now = new Date();
                           const loginTime = now.toLocaleTimeString('en-US', {
@@ -139,6 +141,9 @@ const mongoose = require('mongoose')
                             second: '2-digit',
                           });
                       
+                          
+                          await user.save()
+                    
                           //  // token expire time
 
                           //  const expiration = new Date(now.getTime() + 60 * 60 * 1000); 
@@ -1037,8 +1042,6 @@ const update_Enquiry_status = async (req, res) => {
       });
     }
     
-    
-  
     const statusMappings = {
       1: { enq_status: "Confirmed" },
       2: { enq_status: "Hold"},
@@ -1056,7 +1059,6 @@ const update_Enquiry_status = async (req, res) => {
     }
 
     Object.assign(enquiry, updateData);
-
     
 
     // Save updated enquiry
@@ -2555,7 +2557,7 @@ const update_Enquiry_status = async (req, res) => {
               }          
                   
                   // Create Excel workbook and worksheet
-              const workbook = new ExcelJs.Workbook();
+              const workbook = new ExcelJs.Workbook();              
               const worksheet = workbook.addWorksheet("patients");
       
               // Define Excel header
@@ -2901,7 +2903,7 @@ const update_Enquiry_status = async (req, res) => {
                         message : 'patient kyc details added'
                   })
                         
-                          
+                            
              } catch (error) {
                   return res.status(500).json({
                        success : false ,
@@ -2968,8 +2970,7 @@ const update_Enquiry_status = async (req, res) => {
               price: price,
             });
           }
-        }
-    
+        }    
    
         patient.services = fetchedServices;
         patient.serviceCount += 1;        
@@ -3090,7 +3091,7 @@ module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details
 
     /* patient_Kyc_details */
     patient_Kyc_details, 
-
+        
     /* patient_extra_service */
     patient_extra_service ,
 

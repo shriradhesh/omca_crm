@@ -9,4 +9,7 @@ router.post('/add_endPoints', permissionController.add_endPoints);
 
 router.post('/updatePermission', permissionController.updatePermission)
 
+// Api for get_all_endPoints
+router.get('/get_all_endPoints', permissionController.get_all_endPoints)
+
 module.exports = router

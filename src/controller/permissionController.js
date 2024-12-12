@@ -48,41 +48,51 @@ const add_endPoints = async (req, res) => {
 
 const updatePermission = async (req, res) => {
     try {
-        const { role, endpoint, allow } = req.body;
+        const { permissions } = req.body;
 
-        // Check if permission record exists for the role
-        const permissionRecord = await permissionModel.findOne({ role });
-
-        if (!permissionRecord) {
+        if (!Array.isArray(permissions)) {
             return res.status(400).json({
                 success: false,
-                message: `Role ${role} does not exist in permissions.`,
+                message: "'permissions' should be an array of objects.",
             });
         }
 
-        // Check if the endpoint exists for this role
-        if (!permissionRecord.permissions.has(endpoint)) {
-            return res.status(400).json({
-                success: false,
-                message: `Endpoint ${endpoint} not found for ${role} role.`,
-            });
+        for (const permission of permissions) {
+            const { role, endpoint, allow } = permission;
+
+            if (!role || !endpoint || allow === undefined) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Each permission object must include 'role', 'endpoint', and 'allow'.",
+                });
+            }
+
+            let permissionRecord = await permissionModel.findOne({ role });
+
+            if (!permissionRecord) {
+               
+                permissionRecord = new permissionModel({
+                    role,
+                    permissions: {},
+                });
+            }
+
+            // Update or add the endpoint permission
+            permissionRecord.permissions.set(endpoint, allow);
+
+            // Save the updated permission record
+            await permissionRecord.save();
         }
-
-        // Update the permission for the endpoint
-        permissionRecord.permissions.set(endpoint, allow);
-
-        // Save the updated permission record
-        await permissionRecord.save();
 
         res.status(200).json({
             success: true,
-            message: `Permission updated for ${role} on ${endpoint}`,
+            message: "Permissions updated successfully for all specified roles.",
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Failed to update permission',
-            error: error.message,
+            message: "Server error.",
+            error_message: error.message,
         });
     }
 };
@@ -90,4 +100,37 @@ const updatePermission = async (req, res) => {
 
 
 
-module.exports = { add_endPoints , updatePermission }
+// Api for get endpoints according to role
+       const get_all_endPoints = async( req , res)=> {
+            try {
+                    const allend_points = await permissionModel.find({ }).sort({ createdAt  : -1 }).lean()
+                    if(!allend_points)
+                    {
+                        return res.status(400).json({
+                              success : false ,
+                              message : 'No end points found'
+                        })
+                    }
+
+                      return res.status(200).json({
+                           success : false ,
+                           message : 'ALL end points',
+                           endPoints : allend_points.map((e)=> ({
+                                  Id : e._id,
+                                  role : e.role,
+                                  permissions : e.permissions
+                           }))
+                      })
+                       
+            } catch (error) {
+                  return res.status(500).json({
+                       success : false ,
+                       message : 'Server error',
+                       error_message : error.message
+                  })
+            }
+       }
+
+
+
+module.exports = { add_endPoints , updatePermission  , get_all_endPoints }
