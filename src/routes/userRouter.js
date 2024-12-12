@@ -23,6 +23,8 @@ const dynamicRoleCheck = require('../middleware/role_auth');
     router.post('/change_user_password/:userId', authenticate, roleCheck('/change_user_password'), userController.change_user_password)
     // Api for active_inactive_staff_user
     router.post('/active_inactive_staff_user/:staff_user_id',   userController.active_inactive_staff_user)
+    // Api for logout
+    router.post('/logout', userController.logout)
 
                                                /* Hospital Section */
 

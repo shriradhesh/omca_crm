@@ -50,7 +50,7 @@ const mongoose = require('mongoose')
     
             // Create new user
             const newUser = new userModel({
-                name, email, gender, phone_no, role, password: hashedPassword, profileImage
+                name, email, gender, phone_no, role, password: hashedPassword, profileImage , userLogs : []
             });
     
            
@@ -130,8 +130,7 @@ const mongoose = require('mongoose')
 
               user.refreshToken = refreshToken;
               
-
-         
+                   
                       
                              const now = new Date();
                           const loginTime = now.toLocaleTimeString('en-US', {
@@ -141,8 +140,23 @@ const mongoose = require('mongoose')
                             second: '2-digit',
                           });
                       
-                          
+                          user.userLogs.push({
+                            date : now ,
+                            loginTime : loginTime,
+
+                          })
+               
                           await user.save()
+
+                          let a = user.userLogs[user.userLogs.length -2 ]
+                          let b = user.userLogs[user.userLogs.length -1 ]
+                          if(a.logoutTime === '')
+                          {
+                            a.logoutTime =  b.loginTime
+                          }
+
+                          await user.save()
+                        
                     
                           //  // token expire time
 
@@ -153,16 +167,57 @@ const mongoose = require('mongoose')
                           //     minute: '2-digit',
                           //     second: '2-digit',
                           //   });
+                                if(user.role === 'Admin')
+                                {
+                                  return res.status(200).json({
 
-                    return res.status(200).json({
+                                    success : true ,
+                                    message : `${user.role} login Successfully`,
+                                    details : {
+                                            _id : user._id ,
+                                            name : user.name ,
+                                            email : user.email ,
+                                            phone_no : user.phone_no ,
+                                            profileImage : user.profileImage,
+                                            gender : user.gender ,
+                                            role : user.role ,
+                                            password : user.password ,
+                                            status : user.status ,
+                                            refreshToken : user.refreshToken,
+                                            userLogs : user.userLogs
+        
+                                    } , 
+                                    token : token,
+                                    loginTime : loginTime ,
+                                    // token_expire_time : expireTime
+                            })
+                                }
+                                else
+                                {
+                                  return res.status(200).json({
 
-                            success : true ,
-                            message : `${user.role} login Successfully`,
-                            details : user , 
-                            token : token,
-                            loginTime : loginTime ,
-                            // token_expire_time : expireTime
-                    })
+                                    success : true ,
+                                    message : `${user.role} login Successfully`,
+                                    details : {
+                                            _id : user._id ,
+                                            name : user.name ,
+                                            email : user.email ,
+                                            phone_no : user.phone_no ,
+                                            profileImage : user.profileImage,
+                                            gender : user.gender ,
+                                            role : user.role ,
+                                            password : user.password ,
+                                            status : user.status ,
+                                            refreshToken : user.refreshToken,
+                                          
+        
+                                    } , 
+                                    token : token,
+                                    loginTime : loginTime ,
+                                    // token_expire_time : expireTime
+                            })
+                                }
+                   
             } catch (error) {
                  return res.status(500).json({
                        success : false ,
@@ -172,6 +227,64 @@ const mongoose = require('mongoose')
             }
       }
 
+
+  // Api for logout 
+  const logout = async (req, res) => {
+    try {
+      const { token } = req.body; 
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const userId = decoded.id;
+  
+      // Find the user by ID
+      const user = await userModel.findById(userId);
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'User Not Found',
+        });
+      }
+  
+      // Check if the user has any login logs
+      if (user.userLogs.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No login logs found for this user',
+        });
+      }
+
+      const latestLog = user.userLogs[0]; 
+  
+      // Add logout time to the latest log
+      const now = new Date();
+      const logoutTime = now.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+  
+      latestLog.logoutTime = logoutTime; 
+  
+      // Save the updated user document
+      await user.save();
+  
+      // Respond with a success message
+      return res.status(200).json({
+        success: true,
+        message: 'Logged out successfully',
+       
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server error',
+        error_message: error.message,
+      });
+    }
+  };
+
+  
     
     // Api for get all user staffs
         const get_all_user_staffs = async( req , res )=> {
@@ -221,12 +334,36 @@ const mongoose = require('mongoose')
                                    message : `User Not Found`
                             })
                           }
+                             if(user.role === 'Admin')
+                             {
+                              return res.status(200).json({
+                                success : true ,
+                                message : `${user.role} Detail`,
+                                Details : user
+                           })
+                             }
+                             else
+                             {
+                              return res.status(200).json({
+                                success : true ,
+                                message : `${user.role} Detail`,
+                                Details : {
+                                  _id : user._id ,
+                                  name : user.name,
+                                  email : user.email,
+                                  phone_no : user.phone_no,
+                                  profileImage : user.profileImage ,
+                                  gender : user.gender ,
+                                  role : user.role ,
+                                  password : user.password ,
+                                  status : user.status,
+                                  
+                                  
+                                }
+                              }) 
+                             }
 
-                          return res.status(200).json({
-                               success : true ,
-                               message : `${user.role} Detail`,
-                               Details : user
-                          })
+                        
                } catch (error) {
                    return res.status(500).json({
                         success : false ,
@@ -2633,27 +2770,33 @@ const update_Enquiry_status = async (req, res) => {
                     // check for Total Hospital 
                     const totalHospital = await hospitalModel.countDocuments();
                     // check for pending Enquiry
-                    const pendingEnquiry = await enquiryModel.countDocuments({ enq_status :  { $ne :  'Confirmed' } });
+                    const all_Enquiry = await enquiryModel.countDocuments({ enq_status :  { $ne :  'Confirmed' } });
                     // check for Confirmed Patient
-                    const confirmedPatient = await patientModel.countDocuments({ patient_status : 'Confirmed' });
+                    const Patients = await patientModel.countDocuments({ patient_status : 'Confirmed' });
                     // check for total Earning
                     const treatments = await treatmentModel.find({});   
                     let totalEarning = 0;
-
+                     let myEarning = 0
+                     let hospitalCharge = 0
                     treatments.forEach((treatment) => {
                         const totalCharge = treatment.totalCharge || 0; 
-                        const hospitalCharge = treatment.hospital?.[0]?.hospital_charge || 0; 
-                        totalEarning += (totalCharge - hospitalCharge);
+                        const totalDue = treatment.duePayment || 0; 
+                        hospitalCharge += treatment.hospital?.[0]?.hospital_charge || 0; 
+                        totalEarning += (totalCharge - totalDue);
+
+
                     });                             
-    
+                         
+                    myEarning =  totalEarning - hospitalCharge
+                          
                       return  res.status(200).json({
                         success : true ,
                         message : 'Dashboard Count',
                         totalStaff,
                         totalHospital,
-                        pendingEnquiry,
-                        confirmedPatient,
-                        OMCA_total_Earning : totalEarning
+                        all_Enquiry,
+                        Patients,
+                        OMCA_total_Earning : myEarning
                     });
                                               
                  } catch (error) {
@@ -3072,7 +3215,7 @@ const update_Enquiry_status = async (req, res) => {
     
       
 module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details , update_details,
-    change_user_password, active_inactive_staff_user ,
+    change_user_password, active_inactive_staff_user , logout ,
 
     /* Hospital Section */
     add_hospital , getAll_hospital , update_Hospital_Details , delete_hospital ,

@@ -42,12 +42,16 @@ const userSchema = new mongoose.Schema({
                    required: true,
                    default: new Date(),
                  },
+
                  loginTime: {
-                   type: Date, 
+                   type: String, 
                  },
+
                  logoutTime: {
-                   type: Date, 
+                   type: String, 
+                   default : ''                   
                  },
+
                  activeDuration: {
                    type: Number, 
                    default: 0,
