@@ -123,6 +123,10 @@ const dynamicRoleCheck = require('../middleware/role_auth');
                                                                   /* Dashboard Count */
 
       router.get('/Dashboard_count', authenticate , roleCheck('/Dashboard_count') , userController.Dashboard_count)
+      
+                                                                 /* totalEarnings Count */
+      // Api for totalEarnings
+      router.get('/totalEarnings', authenticate , roleCheck('/totalEarnings') , userController.totalEarnings)
 
 
 

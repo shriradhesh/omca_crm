@@ -9,7 +9,7 @@ const role_Check = (requiredEndpoint) => async (req, res, next) => {
         if (permission.permissions.get(requiredEndpoint) === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Access Denied',
+                message: `Dear user , You are not authorized to access this section!`,
             });
         }
 

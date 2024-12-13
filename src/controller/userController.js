@@ -143,17 +143,21 @@ const mongoose = require('mongoose')
                           user.userLogs.push({
                             date : now ,
                             loginTime : loginTime,
-
                           })
                
                           await user.save()
 
-                          let a = user.userLogs[user.userLogs.length -2 ]
-                          let b = user.userLogs[user.userLogs.length -1 ]
-                          if(a.logoutTime === '')
-                          {
-                            a.logoutTime =  b.loginTime
+                          if (user.userLogs && user.userLogs.length >= 2) {
+                            let a = user.userLogs[user.userLogs.length - 2];
+                            let b = user.userLogs[user.userLogs.length - 1];
+                            
+                            if (a && b && a.logoutTime === '') {
+                              a.logoutTime = b.loginTime;
+                            }
+                          } else {
+                            console.error("Insufficient logs or userLogs is undefined");
                           }
+                          
 
                           await user.save()
                         
@@ -2773,6 +2777,8 @@ const update_Enquiry_status = async (req, res) => {
                     const all_Enquiry = await enquiryModel.countDocuments({ enq_status :  { $ne :  'Confirmed' } });
                     // check for Confirmed Patient
                     const Patients = await patientModel.countDocuments({ patient_status : 'Confirmed' });
+                    // check for Total Appointment 
+                    const totalAppointment = await appointmentModel.countDocuments();
                     // check for total Earning
                     const treatments = await treatmentModel.find({});   
                     let totalEarning = 0;
@@ -2783,7 +2789,6 @@ const update_Enquiry_status = async (req, res) => {
                         const totalDue = treatment.duePayment || 0; 
                         hospitalCharge += treatment.hospital?.[0]?.hospital_charge || 0; 
                         totalEarning += (totalCharge - totalDue);
-
 
                     });                             
                          
@@ -2796,6 +2801,7 @@ const update_Enquiry_status = async (req, res) => {
                         totalHospital,
                         all_Enquiry,
                         Patients,
+                        totalAppointment,
                         OMCA_total_Earning : myEarning
                     });
                                               
@@ -3154,7 +3160,7 @@ const update_Enquiry_status = async (req, res) => {
           if (!treatment_id) {
               return res.status(400).json({
                   success: false,
-                  message: "Treatment ID is required",
+                  message: "Treatment ID is required", 
               });
           }
   
@@ -3170,7 +3176,7 @@ const update_Enquiry_status = async (req, res) => {
           if (paid_amount <= 0) {
               return res.status(400).json({
                   success: false,
-                  message: "Paid amount must be greater than 0",
+                  message: "Paid amount must be greater than 0",  
               });
           }
   
@@ -3211,6 +3217,45 @@ const update_Enquiry_status = async (req, res) => {
           });
       }
   };
+
+                                              /* All earnings  */
+      
+  const totalEarnings = async( req , res)=> {
+         try {
+               // check for all treatments
+               const treatments = await treatmentModel.find({});   
+               if(!treatments)
+               {
+                return res.status(400).json({
+                     success : false ,
+                     message : 'No transaction found'
+                })
+               }
+
+               return res.status(200).json({
+                    success : true ,
+                    message : 'All Earnings',
+                    earnings : treatments.map((e)=> ({
+                      patientId : e.patientId,
+                      patient_name : e.patient_name,
+                      Disease_agreement : e.treatment_course_name,
+                      total_Amount : e.totalCharge,
+                      amount_paid : (e.totalCharge - e.duePayment),
+                      remaining_balance : e.duePayment
+
+                    }))
+               })
+                
+         } catch (error) {
+             return res.status(500).json({
+                 success : false ,
+                 message : 'Server error',
+                 error_message : error.message
+             })
+         }
+  }
+
+
   
     
       
@@ -3254,7 +3299,11 @@ module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details
 
     /* Dashboard Section */
 
-    Dashboard_count
+    Dashboard_count ,
+
+    /* All earnings */
+    totalEarnings
+
 
     
  }
