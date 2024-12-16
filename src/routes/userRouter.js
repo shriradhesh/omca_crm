@@ -127,6 +127,13 @@ const dynamicRoleCheck = require('../middleware/role_auth');
                                                                  /* totalEarnings Count */
       // Api for totalEarnings
       router.get('/totalEarnings', authenticate , roleCheck('/totalEarnings') , userController.totalEarnings)
+                        
+                                                               /* user chat group */
+
+        // Api for userChat
+        router.post('/userChat/:userId' , upload.single('attachment') ,  userController.userChat)
+        // Api for get_chats
+        router.get('/get_chats', userController.get_chats)
 
 
 

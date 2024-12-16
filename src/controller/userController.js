@@ -12,6 +12,7 @@ const treatmentModel = require('../model/treatmentModel')
 const enquiryModel = require('../model/enquiryModel')
 const serviceModel = require('../model/serviceModel')
 const mongoose = require('mongoose')
+const chatModel = require('../model/chatModel')
  
 
 
@@ -338,16 +339,9 @@ const mongoose = require('mongoose')
                                    message : `User Not Found`
                             })
                           }
-                             if(user.role === 'Admin')
-                             {
-                              return res.status(200).json({
-                                success : true ,
-                                message : `${user.role} Detail`,
-                                Details : user
-                           })
-                             }
-                             else
-                             {
+                             
+                             
+                             
                               return res.status(200).json({
                                 success : true ,
                                 message : `${user.role} Detail`,
@@ -365,7 +359,7 @@ const mongoose = require('mongoose')
                                   
                                 }
                               }) 
-                             }
+                             
 
                         
                } catch (error) {
@@ -1682,19 +1676,15 @@ const update_Enquiry_status = async (req, res) => {
                        if(country)
                         {
                            patient.country = country
-                        }
-                       
-                      let dNotes = []
+                        }                      
+                    
                         var today = new Date()
                         if(discussionNotes)
                         {
-                          dNotes.push({
+                          patient.discussionNotes.push({
                                  note : discussionNotes ,
                                  date : today
-                          })
-
-                          patient.discussionNotes = dNotes
-
+                          })                     
                         }
 
                         await patient.save()
@@ -1743,8 +1733,6 @@ const update_Enquiry_status = async (req, res) => {
               message: "Patient not found",
             });
           }
-          
-
         
           const statusMappings = {
             1: { patient_status: "Confirmed" },
@@ -1762,14 +1750,11 @@ const update_Enquiry_status = async (req, res) => {
             });
           }
       
-          Object.assign(patient, updateData);
-
-          
+          Object.assign(patient, updateData);          
       
           // Save updated patient
           await patient.save();
-
-        
+       
           
           return res.status(200).json({
             success: true,
@@ -1910,9 +1895,6 @@ const update_Enquiry_status = async (req, res) => {
     
     
 
-                  
-
-
           // Api for get all appointment 
           const all_appointment = async (req, res) => {
             try {
@@ -1925,18 +1907,7 @@ const update_Enquiry_status = async (req, res) => {
                   message: "No Appointment Found",
                 });
               }
-          
-              // // Fetch patient details for each appointment
-              // const populatedAppointments = await Promise.all(
-              //   getall_appointment.map(async (appointment) => {
-              //     const patient = await patientModel.findOne({ patientId: appointment.patientId }).lean();
-          
-              //     return {
-              //       ...appointment,
-              //       ... patient || null, 
-              //     };
-              //   })
-              // );
+                       
                
               return res.status(200).json({
                 success: true,
@@ -1951,8 +1922,7 @@ const update_Enquiry_status = async (req, res) => {
                        Hospital_name :  a.hospitalName ,
                        discussionNotes : a.discussionNotes,
                        appointment_Date : a.appointment_Date,
-                       created_by : a.createdBy[0].role,
-                       
+                       created_by : a.createdBy[0].role,                        
                        
 
                 })),
@@ -2013,7 +1983,7 @@ const update_Enquiry_status = async (req, res) => {
                                   patientName : a.patientName,
                                   disease_name : a.treatment_name,                                                                     
                                    appointement_status : a.status,
-                                  Hospital_name :  a.hospital_Name,
+                                  Hospital_name :  a.hospitalName,
                                   discussionNotes : a.discussionNotes,
                                   appointment_Date : a.appointment_Date,
                                   created_by : a.createdBy[0].role,
@@ -2051,7 +2021,7 @@ const update_Enquiry_status = async (req, res) => {
                     if (!course_price) {
                       return res.status(400).json({
                         success: false,
-                        message: 'course_price is required',
+                        message: 'course price is required',
                       });
                     }
                 
@@ -2201,6 +2171,8 @@ const update_Enquiry_status = async (req, res) => {
               });
             }
           };
+
+
           
       // Api for delete particular treatement course
       const delete_treatment_course = async ( req , res )=> {
@@ -2253,10 +2225,7 @@ const update_Enquiry_status = async (req, res) => {
             }   
       }
 
-
-
-
-                                                                         /* treatment Section  */
+                                                                /* treatment Section  */
 
           // Api for create treatment
           const create_treatment = async ( req , res )=> {
@@ -2266,7 +2235,7 @@ const update_Enquiry_status = async (req, res) => {
                            // check for patient Id
                            if(!patientId)
                            {
-                            return res.status(400).json({
+                            return res.status(400).json({ 
                                  success : false ,
                                  message : 'patient Id Required'
                             })
@@ -2280,20 +2249,20 @@ const update_Enquiry_status = async (req, res) => {
                                  message : 'treatment Course Id Required'
                             })
                            }  
-                                                      let fetchedServices = [];
+                            let fetchedServices = [];
                                 if (services) {
+
                                   // Validate services array
                                   if (!Array.isArray(services) || services.length === 0) {
                                     return res.status(400).json({
                                       success: false,
                                       message: 'At least one service is required',
                                     });
-                                  }                                 
+                                  }                                               
                                   
-
                                   // Fetch service details in parallel
                                   const servicePromises = services.map((serviceId) =>
-                                    serviceModel.findOne({ serviceId })
+                                    serviceModel.findOne({ serviceId })                                
                                   );
                                   const serviceResults = await Promise.all(servicePromises);
 
@@ -2304,10 +2273,8 @@ const update_Enquiry_status = async (req, res) => {
                                         success: false,
                                         message: 'One or more services not found',
                                       });   
-                                    }     
+                                    }  
 
-                                        
-                                     
                                     fetchedServices.push({
                                       serviceId: service.serviceId,
                                       serviceName: service.serviceName,
@@ -2316,8 +2283,6 @@ const update_Enquiry_status = async (req, res) => {
                                     });
                                   }
                                 }
-
-                        
 
                            // check for patient
                            const patient = await patientModel.findOne({ patientId : patientId })
@@ -2359,16 +2324,13 @@ const update_Enquiry_status = async (req, res) => {
                                     success : false ,
                                     message : 'Treatment already exist for the patient'
                                })              
-                      
-                 
-                           }          
-                           
-                          
-                           
+                                       
+                           }    
+
                              const treatmentId = `Tx-${randomNumber}`;
                                  const new_data = new treatmentModel({
                                       treatment_id  : treatmentId ,
-                                       patientId ,
+                                       patientId , 
                                        patient_name : patient.patient_name,
                                        treatment_course_id : treatment_course_id,
                                        totalCharge : totalCharge,
@@ -2405,8 +2367,6 @@ const update_Enquiry_status = async (req, res) => {
                                  }))
 
 
-                           
-                              
 
                   } catch (error) {
                        return res.status(500).json({
@@ -2452,7 +2412,7 @@ const update_Enquiry_status = async (req, res) => {
                        message : 'No patient treatment Record Found'
                   })
                 }
-
+                       
                 return res.status(200).json({
                      success : true ,
                      message : 'Patient Treatements',
@@ -3047,8 +3007,8 @@ const update_Enquiry_status = async (req, res) => {
                   patient.Kyc_details.push(newKycDetails);
                   await patient.save();
 
-                  return res.status(400).json({
-                        success : false ,
+                  return res.status(200).json({
+                        success : true  ,
                         message : 'patient kyc details added'
                   })
                         
@@ -3156,7 +3116,7 @@ const update_Enquiry_status = async (req, res) => {
                   });
               }
           }
-  
+
           if (!treatment_id) {
               return res.status(400).json({
                   success: false,
@@ -3186,7 +3146,7 @@ const update_Enquiry_status = async (req, res) => {
                   treatment.duePayment = 0;
                   totalCharge += clearpayment; 
               } else {
-                  treatment.duePayment -= paid_amount; 
+                  treatment.duePayment -= paid_amount 
               }
   
               // Add payment details
@@ -3254,9 +3214,96 @@ const update_Enquiry_status = async (req, res) => {
              })
          }
   }
+                                                                 /* Chat Section */
 
+            // Api for add user chat 
 
+            const userChat = async (req, res) => {
+              try {
+                  const userId = req.params.userId;
+                  const { message } = req.body;
+          
+                  // Check for user ID
+                  if (!userId) {
+                      return res.status(400).json({
+                          success: false,
+                          message: 'User Id Required',
+                      });
+                  }
+          
+                  const user = await userModel.findOne({
+                      _id: userId,
+                  });
+                  if (!user) {
+                      return res.status(400).json({
+                          success: false,
+                          message: 'User Not Found',
+                      });
+                  }
+          
+                  // Check if file is uploaded (attachment is optional)
+                  let attachment = '';
+                  if (req.file) {
+                      attachment = req.file.filename;
+                  }
+          
+                  // Add new message
+                  const newMessage = new chatModel({
+                      userId,
+                      userName: user.name,
+                      message,
+                      attachment,
+                  });
+          
+                  await newMessage.save();
+          
+                  return res.status(200).json({
+                      success: true,
+                      message: 'Message Submitted Successfully',
+                  });
+              } catch (error) {
+                  return res.status(500).json({
+                      success: false,
+                      message: 'Server error',
+                      error_message: error.message,
+                  });
+              }
+          };
+          
   
+
+          // Api for get all chats
+             const get_chats = async( req , res)=> {
+                   try {
+                           // check for all chats
+
+                           const allChats = await chatModel.find({ })
+                           if(!allChats)
+                           {
+                            return res.status(200).json({
+                                 success : false ,
+                                 message : 'No chats found'
+                            })
+                           } 
+
+                           return res.status(200).json({
+                               success : true ,
+                               message : 'All Chats',
+                               chats : allChats.map((c)=> ({
+                                      userId : c.userId,
+                                      userName : c.userName,
+                                      message : c.message,
+                                      attachment : c.attachment || ''
+                               }))
+                           })
+                   } catch (error) {
+                       return res.status(500).json({
+                            success : false ,
+                            message : 'Server error',
+                            error_message : error.message
+                       })
+                   }
+             }
     
       
 module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details , update_details,
@@ -3302,7 +3349,10 @@ module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details
     Dashboard_count ,
 
     /* All earnings */
-    totalEarnings
+    totalEarnings,
+
+    /* Chat Group */
+    userChat  , get_chats
 
 
     
