@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const jwt_secret = 'omca@123';
+
 const { isTokenBlacklisted } = require('../middleware/blacklistToken');
 
 

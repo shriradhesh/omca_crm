@@ -125,7 +125,7 @@ const chatModel = require('../model/chatModel')
                      // Generate Refresh Token (Long-Lived)
                 const refreshToken = jwt.sign(
                   { id: user._id },
-                  process.env.REFRESH_TOKEN_SECRET,
+                  process.env.REFRESH_TOKEN_SECRET,+
                   { expiresIn: '30d' } 
               );
 
@@ -153,7 +153,7 @@ const chatModel = require('../model/chatModel')
                             let b = user.userLogs[user.userLogs.length - 1];
                             
                             if (a && b && a.logoutTime === '') {
-                              a.logoutTime = b.loginTime;
+                                  a.logoutTime = b.loginTime;
                             }
                           } else {
                             console.error("Insufficient logs or userLogs is undefined");
@@ -231,6 +231,34 @@ const chatModel = require('../model/chatModel')
                  })
             }
       }
+
+  // Api for refresh token
+       const refreshToken = async(req , res)=> {
+        try {
+          const token = req.body.token; 
+          if (!token) {
+            return res.status(400).json({ success: false, message: "No refresh token found" });
+          }
+      
+          const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+          const user = await userModel.findById(decoded.id);
+      
+          if (!user || user.refreshToken !== token) {
+            return res.status(400).json({ success: false, message: "Invalid refresh token" });
+          }
+      
+          // Generate new access token
+          const newAccessToken = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+          );
+      
+          return res.status(200).json({ success: true, token: newAccessToken });
+        } catch (error) {
+          return res.status(500).json({ success: false, message: "Server error" , error_message : error.message });
+        }
+       }
 
 
   // Api for logout 
@@ -1451,59 +1479,61 @@ const update_Enquiry_status = async (req, res) => {
             
           // Generate sample file
                      
-              const generate_sampleFile = async (req, res) => {
-                try {
-                  const workbook = new ExcelJs.Workbook();
-                  const worksheet = workbook.addWorksheet("Enquiry");
-              
-                  worksheet.addRow([
-                    "enquiryId",
-                    "name",
-                    "Age",
-                    "Email",
-                    "Gender",
-                    "Country",
-                    "emergency_contact_no",
-                    "Enquiry Status"                  
-                  
-                  ]);
-              
-                  // Add sample data
-                  worksheet.addRow([
-                     "Enq-12345",
-                     "SAMUEL SESAY",
-                     "42" ,
-                     "xyz@gmail.com",
-                     "Male",
-                     "India",
-                    "7894651320",                                       
-                    "Pending",                 
-                  
-                  ]);
-              
-                  // Set response headers for Excel download with the filename
-                  res.setHeader(
-                    "Content-Type",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  );
-                  res.setHeader(
-                    "Content-Disposition",
-                    "attachment; filename=sample_sheet.xlsx"
-                  );
-              
-                  // Send the Excel file as a response
-                  await workbook.xlsx.write(res);
-                  res.end();
-                  console.log("Excel file sent");
-                } catch (error) {
-                  console.error("Error sending Excel file:", error);
-                  res.status(500).send("Internal Server Error");
-                }
-              };
-
+          const generate_sampleFile = async (req, res) => {
+            try {
+              const workbook = new ExcelJs.Workbook();
+              const worksheet = workbook.addWorksheet("Enquiry");
+          
+              // Add the headers (consistent with the requiredHeaders)
+              worksheet.addRow([
+                "Name",
+                "Age",
+                "Email",
+                "Gender",
+                "Country",
+                "Emergency Contact Number",
+                "Enquiry Status",
+              ]);
+          
+              // Add sample data
+              worksheet.addRow([
+                "SAMUEL SESAY",
+                "42",
+                "xyz@gmail.com",
+                "Male",
+                "India",
+                "7894651320",
+                "Pending",
+              ]);
+          
+              // Set response headers for Excel download with the filename
+              res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              );
+              res.setHeader(
+                "Content-Disposition",
+                "attachment; filename=sample_sheet.xlsx"
+              );
+          
+              // Send the Excel file as a response
+              await workbook.xlsx.write(res);
+              res.end();
+              console.log("Excel file sent");
+            } catch (error) {
+              console.error("Error sending Excel file:", error);
+              res.status(500).send("Internal Server Error");
+            }
+          };
+          
 
   // Api for import patient 
 
+  const generateEnquiryId = () => {
+    // Generates a random 5-digit number
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    return `Enq-${randomNum}`;
+  };
 
   const import_file = async (req, res) => {
     try {
@@ -1531,7 +1561,6 @@ const update_Enquiry_status = async (req, res) => {
   
       const worksheet = workbook.getWorksheet(1);
       const requiredHeaders = [
-        "enquiryId",
         "Name",
         "Age",
         "Email",
@@ -1539,18 +1568,21 @@ const update_Enquiry_status = async (req, res) => {
         "Country",
         "Emergency Contact Number",
         "Enquiry Status",
-       
       ];
   
-      // Validate headers
+      // Validate headers with normalization
       const actualHeaders = [];
       worksheet.getRow(1).eachCell((cell) => {
         actualHeaders.push(cell.value);
       });
   
-      const isValidHeaders = requiredHeaders.every(
-        (header, index) => header === actualHeaders[index]
-      );
+      console.log("Actual Headers:", actualHeaders); 
+  
+      const isValidHeaders = requiredHeaders.every((header, index) => {
+        return (
+          header.toLowerCase().trim() === actualHeaders[index]?.toLowerCase().trim()
+        );
+      });
   
       if (!isValidHeaders) {
         return res.status(400).json({
@@ -1566,16 +1598,15 @@ const update_Enquiry_status = async (req, res) => {
         if (rowNumber !== 1) {
           // Skip the header row
           const rowData = {
-            
-               enquiryId: row.getCell(1).value,
-                name: row.getCell(2).value,
-            age: row.getCell(3).value,
-            email: row.getCell(4).value,
-            gender: row.getCell(5).value,
-            country: row.getCell(6).value,
-            emergency_contact_no: row.getCell(7).value || 0,
-            enq_status: row.getCell(8).value,
-            patient_type: row.getCell(9).value,             
+            enquiryId: generateEnquiryId(),
+            name: row.getCell(1).value, 
+            age: row.getCell(2).value, 
+            email: row.getCell(3).value, 
+            gender: row.getCell(4).value, 
+            country: row.getCell(5).value, 
+            emergency_contact_no: row.getCell(6).value || 0, 
+            enq_status: row.getCell(7).value, 
+            patient_type: row.getCell(8)?.value || "Unknown", 
             created_by: [
               {
                 Name: user.name,
@@ -1583,7 +1614,6 @@ const update_Enquiry_status = async (req, res) => {
                 userId: userId,
               },
             ],
-            
           };
   
           if (!emailSet.has(rowData.email)) {
@@ -1918,7 +1948,7 @@ const update_Enquiry_status = async (req, res) => {
                        patientId : a.patientId,
                        patientName : a.patientName,
                        disease_name : a.treatment_name,                                     
-                        appointement_status : a.status,
+                       appointement_status : a.status,
                        Hospital_name :  a.hospitalName ,
                        discussionNotes : a.discussionNotes,
                        appointment_Date : a.appointment_Date,
@@ -1961,7 +1991,7 @@ const update_Enquiry_status = async (req, res) => {
                                    success : false ,
                                    message : 'Patient Not found'
                               })
-                           }
+                           }  
 
                            // check for appointment 
                              const appointment = await appointmentModel.find({ patientId }).sort({ createdAt : -1 }).lean()
@@ -3223,7 +3253,7 @@ const update_Enquiry_status = async (req, res) => {
                   const userId = req.params.userId;
                   const { message } = req.body;
           
-                  // Check for user ID
+                  // Check for user 
                   if (!userId) {
                       return res.status(400).json({
                           success: false,
@@ -3307,7 +3337,7 @@ const update_Enquiry_status = async (req, res) => {
     
       
 module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details , update_details,
-    change_user_password, active_inactive_staff_user , logout ,
+    change_user_password, active_inactive_staff_user , logout , refreshToken,
 
     /* Hospital Section */
     add_hospital , getAll_hospital , update_Hospital_Details , delete_hospital ,

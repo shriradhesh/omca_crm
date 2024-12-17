@@ -25,6 +25,8 @@ const dynamicRoleCheck = require('../middleware/role_auth');
     router.post('/active_inactive_staff_user/:staff_user_id',   userController.active_inactive_staff_user)
     // Api for logout
     router.post('/logout', userController.logout)
+    // Api for refreshToken
+    router.post('/refreshToken', userController.refreshToken)
 
                                                /* Hospital Section */
 
