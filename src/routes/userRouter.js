@@ -110,6 +110,8 @@ const dynamicRoleCheck = require('../middleware/role_auth');
                                                             /* Report section */
      // Api for export_client_jobs_filteredpatient
      router.get('/exportfilteredpatient/:userId' ,  userController.exportfilteredpatient)
+     // Api for patientCount_year_wise
+     router.get('/patientCount_year_wise', userController.patientCount_year_wise )
 
                                                                   /* treatment section */
 

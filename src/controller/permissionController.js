@@ -1,6 +1,7 @@
 const permissionModel = require('../model/permissionModel')
 
 
+
 const add_endPoints = async (req, res) => {
     try {
         const { endpoints } = req.body; 
@@ -133,4 +134,7 @@ const updatePermission = async (req, res) => {
 
 
 
-module.exports = { add_endPoints , updatePermission  , get_all_endPoints }
+       
+
+
+module.exports = { add_endPoints , updatePermission  , get_all_endPoints  }

@@ -22,7 +22,22 @@ const authenticate = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+             // current date and time
+             const currentDate = new Date()
+             const currentDateString = currentDate.toISOString().split('T')[0]
+             const currentTimeString = currentDate.toTimeString().split(' ')[0]
+
+             if (
+                decoded.expireDate < currentDateString ||
+                (decoded.expireDate === currentDateString && decoded.expireTime <= currentTimeString)
+              ) 
+              {
+                return res.status(400).json({
+                       success : false ,
+                       message : 'Unauthorized'
+                })
+              }
+             req.user = decoded;
         next();
     } catch (error) {
         res.status(500).json({ message: 'Invalid Token' });

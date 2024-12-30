@@ -2,7 +2,7 @@ const permissionModel = require('../model/permissionModel');
 
 const role_Check = (requiredEndpoint) => async (req, res, next) => {
     try {
-        const userRole = req.user.role;  // Assuming the user object has the role
+        const userRole = req.user.role; 
         const permission = await permissionModel.findOne({ role: userRole });         
 
             

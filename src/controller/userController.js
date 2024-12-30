@@ -114,27 +114,31 @@ const chatModel = require('../model/chatModel')
                            message : 'Password Incorrect'
                     })
                    }
-              
+            
+                          // Set token expiry date and time
+                          const now = new Date();
+                          const expiration = new Date(now.getTime() + 24 * 60 * 60 * 1000); 
+
+                          const expireDate = expiration.toISOString().split('T')[0]; 
+                          const expireTime = expiration.toTimeString().split(' ')[0]; 
+
                     // Generate JWT token
                     const token = jwt.sign(
-                      { id: user._id, role: user.role }, 
+                      { id: user._id, role: user.role , expireDate, expireTime }, 
                       process.env.JWT_SECRET,
-                      { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
+                      { expiresIn : '1d' }
                   );
                   
                      // Generate Refresh Token (Long-Lived)
                 const refreshToken = jwt.sign(
                   { id: user._id },
-                  process.env.REFRESH_TOKEN_SECRET,+
+                  process.env.REFRESH_TOKEN_SECRET,
                   { expiresIn: '30d' } 
               );
 
-              user.refreshToken = refreshToken;
+              // user.refreshToken = refreshToken;
               
-                   
-                      
-                             const now = new Date();
-                          const loginTime = now.toLocaleTimeString('en-US', {
+                    const loginTime = now.toLocaleTimeString('en-US', {
                             hour12: false, 
                             hour: '2-digit',
                             minute: '2-digit',
@@ -163,15 +167,7 @@ const chatModel = require('../model/chatModel')
                           await user.save()
                         
                     
-                          //  // token expire time
-
-                          //  const expiration = new Date(now.getTime() + 60 * 60 * 1000); 
-                          //   const expireTime = expiration.toLocaleTimeString('en-US', {
-                          //     hour12: false,
-                          //     hour: '2-digit',
-                          //     minute: '2-digit',
-                          //     second: '2-digit',
-                          //   });
+                         
                                 if(user.role === 'Admin')
                                 {
                                   return res.status(200).json({
@@ -187,10 +183,8 @@ const chatModel = require('../model/chatModel')
                                             gender : user.gender ,
                                             role : user.role ,
                                             password : user.password ,
-                                            status : user.status ,
-                                            refreshToken : user.refreshToken,
-                                            userLogs : user.userLogs
-        
+                                            status : user.status ,                                         
+                                            userLogs : user.userLogs        
                                     } , 
                                     token : token,
                                     loginTime : loginTime ,
@@ -212,8 +206,7 @@ const chatModel = require('../model/chatModel')
                                             gender : user.gender ,
                                             role : user.role ,
                                             password : user.password ,
-                                            status : user.status ,
-                                            refreshToken : user.refreshToken,
+                                            status : user.status ,                                        
                                           
         
                                     } , 
@@ -251,10 +244,10 @@ const chatModel = require('../model/chatModel')
           const newAccessToken = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+            { expiresIn: "1d" }
           );
       
-          return res.status(200).json({ success: true, token: newAccessToken });
+          return res.status(200).json({ success: true, accessToken: newAccessToken });
         } catch (error) {
           return res.status(500).json({ success: false, message: "Server error" , error_message : error.message });
         }
@@ -335,7 +328,7 @@ const chatModel = require('../model/chatModel')
                                success : true ,
                                message : 'All user Staff',
                                Details : user_staff
-                        })
+                        })                
                } catch (error) {
                     return res.status(500).json({
                            success : false ,
@@ -367,8 +360,6 @@ const chatModel = require('../model/chatModel')
                                    message : `User Not Found`
                             })
                           }
-                             
-                             
                              
                               return res.status(200).json({
                                 success : true ,
@@ -835,7 +826,7 @@ const chatModel = require('../model/chatModel')
           return result;
       }
 
-      const randomNumber = generateRandomNumber(5);
+
 
         // Api for add New Enquiry
 
@@ -901,7 +892,7 @@ const chatModel = require('../model/chatModel')
             const exist_enq = await enquiryModel.findOne({ email });
             if (!exist_enq) {
           
-              const enquiryId = `Enq-${randomNumber}`;
+              const enquiryId = `Enq-${generateRandomNumber(5)}`;
               // Create new Enquiry
               const newEnq = new enquiryModel({
                 enquiryId : enquiryId,
@@ -1252,7 +1243,7 @@ const update_Enquiry_status = async (req, res) => {
 
             } else {
                 // Add new enquiry as a patient
-                const patientId = `Pt-${randomNumber}`;
+                const patientId = `Pt-${generateRandomNumber(5)}`;
                 const newPatient = new patientModel({
                     patientId: patientId,
                     patient_name: enquiry.name,
@@ -1694,7 +1685,7 @@ const update_Enquiry_status = async (req, res) => {
                        if(gender)
                         {
                            patient.gender = gender
-                        }
+                        }                        
                        if(email)
                         {
                            patient.email = email
@@ -1874,7 +1865,7 @@ const update_Enquiry_status = async (req, res) => {
         }
     
        
-        const appointmentId = `Appt-${randomNumber}`;
+        const appointmentId = `Appt-${generateRandomNumber(5)}`;
         const newAppointment = new appointmentModel({
           appointmentId,
           patientId,
@@ -2160,10 +2151,10 @@ const update_Enquiry_status = async (req, res) => {
               if (!treatment_course_id) {
                 return res.status(400).json({
                   success: false,
-                  message: 'Treatment course ID is required.',
+                  message: 'Treatment course ID is required.', 
                 });
               }
-          
+
               // Check for treatment course existence
               const treatment_course = await treatement_course_model.findById(treatment_course_id);
               if (!treatment_course) {
@@ -2193,6 +2184,7 @@ const update_Enquiry_status = async (req, res) => {
                 success: true,
                 message: 'Treatment course details updated successfully.',
               });
+                 
             } catch (error) {
               return res.status(500).json({
                 success: false,
@@ -2271,6 +2263,7 @@ const update_Enquiry_status = async (req, res) => {
                             })
                            }
 
+
                            // check for treatment course Id
                            if(!treatment_course_id)
                            {
@@ -2332,9 +2325,8 @@ const update_Enquiry_status = async (req, res) => {
                                  success : false ,
                                  message : 'Treatment Course Not Found'
                             })
-                           }                    
+                           }                  
                     
-
                              if(patient.patient_status !== 'Confirmed')
                              {
                                  return res.status(400).json({
@@ -2357,7 +2349,7 @@ const update_Enquiry_status = async (req, res) => {
                                        
                            }    
 
-                             const treatmentId = `Tx-${randomNumber}`;
+                             const treatmentId = `Tx-${generateRandomNumber(5)}`;
                                  const new_data = new treatmentModel({
                                       treatment_id  : treatmentId ,
                                        patientId , 
@@ -2574,8 +2566,7 @@ const update_Enquiry_status = async (req, res) => {
                                   success : false ,
                                   message : 'Treatment Id Required'
                             })
-                          }
-                             
+                          }                             
 
                           // check for status
                          
@@ -2647,8 +2638,6 @@ const update_Enquiry_status = async (req, res) => {
                       message: 'userId is required',
                   });
               }
-
-      
               // Check for user existence
               const user = await userModel.findOne({ _id: userId });
               if (!user) {
@@ -2667,7 +2656,7 @@ const update_Enquiry_status = async (req, res) => {
                   filter.gender = gender;
               }
       
-              // Construct regex-based filters for `district` and `job_Type` 
+              // Construct regex-based filters for country and treatment_name
               if (country) {
                   filter.country = { $regex: country , $options: 'i' }; 
               }
@@ -2680,7 +2669,7 @@ const update_Enquiry_status = async (req, res) => {
       
               // Fetch patients
               const totalpatients = await patientModel.find({ ...filter });
-              if (totalpatients.length === 0) {
+              if (totalpatients.length === 0) { 
                   return res.status(400).json({
                       success: false,
                       message: 'No patient found ',
@@ -2736,8 +2725,7 @@ const update_Enquiry_status = async (req, res) => {
               await workbook.xlsx.write(res);
       
               // End the response
-              res.end();
-              
+              res.end();             
       
               
           } catch (error) {
@@ -2751,6 +2739,75 @@ const update_Enquiry_status = async (req, res) => {
       };
 
       
+// Api for get all patient according to diseases
+const patientCount_year_wise = async (req, res) => {
+  try {
+      const checkAllPatient = await patientModel.find({});
+
+      if (checkAllPatient.length === 0) {
+          return res.status(400).json({
+              success: false,
+              message: 'No profiles found'
+          });
+      }
+
+      // Get the current year
+      const currentYear = new Date().getFullYear();
+
+
+      const years = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3, currentYear - 4];
+      const patientByYear = {};
+      years.forEach(year => {
+        patientByYear[year] = {};
+      });
+
+      // Count checkAllPatient by year and disease
+      checkAllPatient.forEach(pat => {
+          const year = new Date(pat.createdAt).getFullYear();  
+          const disease = pat.patient_disease[0]?.disease_name; 
+
+          if (disease) {
+            
+              if (!patientByYear[year][disease]) {
+                  patientByYear[year][disease] = 0;
+              }
+              patientByYear[year][disease]++;
+          }
+      });
+
+  
+      const allDiseases = new Set();
+      checkAllPatient.forEach(pat => {
+          const disease = pat.patient_disease[0]?.disease_name;
+          if (disease) {
+              allDiseases.add(disease);
+          }
+      });
+    
+      allDiseases.forEach(disease => {
+          years.forEach(year => {
+              if (!patientByYear[year].hasOwnProperty(disease)) {
+                  patientByYear[year][disease] = 0;
+              }
+          });
+      });
+
+      return res.status(200).json({
+          success: true,
+          message: 'patient Count ',
+          details: patientByYear
+      });
+
+  } catch (error) {
+      return res.status(500).json({
+          success: false,
+          message: 'Server error',
+          error_message: error.message
+      });
+  }
+};
+
+
 
                                                         /* Dashboard Section */
 
@@ -2824,7 +2881,6 @@ const update_Enquiry_status = async (req, res) => {
                                            message : `Required ${field.replace('_' , ' ')}`
                                       })
                                 }
-
                         }
 
                         // check for service exist
@@ -2840,7 +2896,7 @@ const update_Enquiry_status = async (req, res) => {
                           else
                           {
 
-                                   const serviceId = `Svc-${randomNumber}`
+                                   const serviceId = `Svc-${generateRandomNumber(5)}`
                                    // add new service
                                    const newService = new serviceModel({
                                        serviceId : serviceId,
@@ -2929,9 +2985,8 @@ const update_Enquiry_status = async (req, res) => {
                                        success : false ,
                                        message : 'Service not Found'
                                   })
-                               }
+                               }           
 
-                                 
                                let message = ''
                                if(service.isActive === 1)
                                {
@@ -3007,7 +3062,7 @@ const update_Enquiry_status = async (req, res) => {
                            message : 'PatientId Required'
                       })
                      }
-
+                         
                      // check for patient
                      const patient = await patientModel.findOne({
                            patientId : patientId
@@ -3092,14 +3147,14 @@ const update_Enquiry_status = async (req, res) => {
     
           // Loop through each service to fetch serviceName
           for (let service of services) {
-            const { serviceId, price } = service;
+            const { serviceId , price } = service;
     
             const serviceData = await serviceModel.findOne({ serviceId });
     
             if (!serviceData) {
               return res.status(400).json({
                 success: false,
-                message: `Service with serviceId :  ${serviceId} not found`,
+                message: `Service with serviceId : ${serviceId} not found`,
               });
             }   
            
@@ -3113,7 +3168,7 @@ const update_Enquiry_status = async (req, res) => {
    
         patient.services = fetchedServices;
         patient.serviceCount += 1;        
-        await patient.save();
+        await patient.save(); 
     
         return res.status(200).json({
           success: true,
@@ -3208,7 +3263,7 @@ const update_Enquiry_status = async (req, res) => {
       }
   };
 
-                                              /* All earnings  */
+                                                  /* All earnings  */
       
   const totalEarnings = async( req , res)=> {
          try {
@@ -3271,7 +3326,7 @@ const update_Enquiry_status = async (req, res) => {
                       });
                   }
           
-                  // Check if file is uploaded (attachment is optional)
+                  // Check if file is uploaded 
                   let attachment = '';
                   if (req.file) {
                       attachment = req.file.filename;
@@ -3284,7 +3339,7 @@ const update_Enquiry_status = async (req, res) => {
                       message,
                       attachment,
                   });
-          
+                    
                   await newMessage.save();
           
                   return res.status(200).json({
@@ -3372,7 +3427,7 @@ module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details
 
 
     /* Report section */
-    exportfilteredpatient  ,
+    exportfilteredpatient  , patientCount_year_wise ,
 
     /* Dashboard Section */
 
