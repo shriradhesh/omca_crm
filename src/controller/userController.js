@@ -207,8 +207,7 @@ const chatModel = require('../model/chatModel')
                                             role : user.role ,
                                             password : user.password ,
                                             status : user.status ,                                        
-                                          
-        
+                                                  
                                     } , 
                                     token : token,
                                     loginTime : loginTime ,
@@ -2345,8 +2344,7 @@ const update_Enquiry_status = async (req, res) => {
                                return res.status(400).json({
                                     success : false ,
                                     message : 'Treatment already exist for the patient'
-                               })              
-                                       
+                               })                                                     
                            }    
 
                              const treatmentId = `Tx-${generateRandomNumber(5)}`;
@@ -2638,6 +2636,7 @@ const update_Enquiry_status = async (req, res) => {
                       message: 'userId is required',
                   });
               }
+              
               // Check for user existence
               const user = await userModel.findOne({ _id: userId });
               if (!user) {
@@ -2661,7 +2660,7 @@ const update_Enquiry_status = async (req, res) => {
                   filter.country = { $regex: country , $options: 'i' }; 
               }
               if (treatment_name) {
-                  filter.treatment_name = { $regex: treatment_name, $options: 'i' }; 
+                filter['patient_disease.disease_name'] = { $regex: treatment_name, $options: 'i' }; 
               }
               if (age) {
                   filter.age = age ; 
@@ -2673,7 +2672,7 @@ const update_Enquiry_status = async (req, res) => {
                   return res.status(400).json({
                       success: false,
                       message: 'No patient found ',
-                  });
+                  }); 
               }          
                   
                   // Create Excel workbook and worksheet
@@ -2687,10 +2686,8 @@ const update_Enquiry_status = async (req, res) => {
                   { header: "Patient Email", key: "email", width: 25 },
                   { header: "Country", key: "country", width: 15 },
                   { header: "Emergency Contact Number", key: "emergency_contact_no", width: 15 },                 
-                  { header: "Gender", key: "gender", width: 10 },
-                  { header: "Treatment Name", key: "treatment_name", width: 20 },
-                  { header: "Patient Disease", key: "patient_disease", width: 50 },
-                  
+                  { header: "Gender", key: "gender", width: 10 },                
+                  { header: "Patient Disease", key: "patient_disease", width: 50 },                  
               ];
       
               // Add data to the worksheet
@@ -2702,11 +2699,9 @@ const update_Enquiry_status = async (req, res) => {
                       email: patient.email,
                       country: patient.country,
                       emergency_contact_no: patient.emergency_contact_no,                   
-                      gender: patient.gender,
-                      treatment_name: patient.treatment_name,
-                      patient_disease: patient.patient_disease.map((p)=> ({
-                                       patient_disease : p.disease_name
-                      })),                     
+                      gender: patient.gender,                 
+                      patient_disease: patient.patient_disease[0].disease_name
+                                         
                   });
               });                 
 
@@ -2758,7 +2753,7 @@ const patientCount_year_wise = async (req, res) => {
       const years = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3, currentYear - 4];
       const patientByYear = {};
       years.forEach(year => {
-        patientByYear[year] = {};
+      patientByYear[year] = {};
       });
 
       // Count checkAllPatient by year and disease
@@ -2963,10 +2958,12 @@ const patientCount_year_wise = async (req, res) => {
 
 
         // Api for active inactive service
+
                    const active_inactive_Service = async( req , res )=> {
                         try {
                                const serviceId = req.params.serviceId
                                // check for service ID
+
                                if(!serviceId)
                                {
                                   return res.status(400).json({
@@ -3263,7 +3260,7 @@ const patientCount_year_wise = async (req, res) => {
       }
   };
 
-                                                  /* All earnings  */
+                                                      /* All earnings  */
       
   const totalEarnings = async( req , res)=> {
          try {
@@ -3420,7 +3417,7 @@ module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details
          
     /* treatment section */
 
-    create_treatment , get_patient_treatment ,   assign_patient_to_hospital , update_patient_treatment_status , add_new_treatment_payment ,
+    create_treatment , get_patient_treatment , assign_patient_to_hospital , update_patient_treatment_status , add_new_treatment_payment ,
 
     /* Appointment Section */
     create_appointment , all_appointment , get_patient_appointment , 

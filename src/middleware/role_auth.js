@@ -12,7 +12,6 @@ const role_Check = (requiredEndpoint) => async (req, res, next) => {
                 message: `Dear user , You are not authorized to access this section!`,
             });
         }
-
         next();
     } catch (error) {
         console.error(error);
