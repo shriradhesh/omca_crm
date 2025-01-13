@@ -19,7 +19,6 @@ const authenticate = (req, res, next) => {
               message: 'Token has been invalidated'
              });
     }
-
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
              // current date and time

@@ -157,7 +157,7 @@ const chatModel = require('../model/chatModel')
                             let b = user.userLogs[user.userLogs.length - 1];
                             
                             if (a && b && a.logoutTime === '') {
-                                  a.logoutTime = b.loginTime;
+                                  a.logoutTime = `${b.loginTime}-${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
                             }
                           } else {
                             console.error("Insufficient logs or userLogs is undefined");
@@ -289,7 +289,7 @@ const chatModel = require('../model/chatModel')
         second: '2-digit',
       });
   
-      latestLog.logoutTime = logoutTime; 
+      latestLog.logoutTime = `${logoutTime} -${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`; 
   
       // Save the updated user document
       await user.save();
@@ -300,7 +300,7 @@ const chatModel = require('../model/chatModel')
         message: 'Logged out successfully',
        
       });
-    } catch (error) {
+    } catch (error) {                 
       return res.status(500).json({
         success: false,
         message: 'Server error',
@@ -308,8 +308,6 @@ const chatModel = require('../model/chatModel')
       });
     }
   };
-
-  
     
     // Api for get all user staffs
         const get_all_user_staffs = async( req , res )=> {
@@ -1566,7 +1564,7 @@ const update_Enquiry_status = async (req, res) => {
         actualHeaders.push(cell.value);
       });
   
-      console.log("Actual Headers:", actualHeaders); 
+     
   
       const isValidHeaders = requiredHeaders.every((header, index) => {
         return (
@@ -1589,14 +1587,17 @@ const update_Enquiry_status = async (req, res) => {
           // Skip the header row
           const rowData = {
             enquiryId: generateEnquiryId(),
-            name: row.getCell(1).value, 
-            age: row.getCell(2).value, 
-            email: row.getCell(3).value, 
-            gender: row.getCell(4).value, 
-            country: row.getCell(5).value, 
-            emergency_contact_no: row.getCell(6).value || 0, 
-            enq_status: row.getCell(7).value, 
-            patient_type: row.getCell(8)?.value || "Unknown", 
+            name: row.getCell(1).value,
+            age: row.getCell(2).value,
+            email:
+              typeof row.getCell(3).value === 'object' && row.getCell(3).value !== null
+                ? row.getCell(3).value.text || row.getCell(3).value.hyperlink.split('mailto:')[1]
+                : row.getCell(3).value,
+            gender: row.getCell(4).value,
+            country: row.getCell(5).value,
+            emergency_contact_no: row.getCell(6).value || 0,
+            enq_status: row.getCell(7).value,
+            patient_type: row.getCell(8)?.value || "Unknown",
             created_by: [
               {
                 Name: user.name,
@@ -1606,7 +1607,7 @@ const update_Enquiry_status = async (req, res) => {
             ],
           };
   
-          if (!emailSet.has(rowData.email)) {
+          if (rowData.email && !emailSet.has(rowData.email)) {
             emailSet.add(rowData.email);
             fileData.push(rowData);
           }
@@ -3002,7 +3003,7 @@ const patientCount_year_wise = async (req, res) => {
                                     success : true ,
                                     message : message
                                })
-                               
+
                         } catch (error) {
                               return res.status(500).json({
                                    success : false ,
@@ -3199,7 +3200,6 @@ const patientCount_year_wise = async (req, res) => {
                   });
               }
           }
-
           if (!treatment_id) {
               return res.status(400).json({
                   success: false,
@@ -3389,6 +3389,7 @@ const patientCount_year_wise = async (req, res) => {
              }
     
       
+        
 module.exports = { add_staff_user  ,  login  , get_all_user_staffs , get_details , update_details,
     change_user_password, active_inactive_staff_user , logout , refreshToken,
 
